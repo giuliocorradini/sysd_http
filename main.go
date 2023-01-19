@@ -2,30 +2,37 @@ package main
 
 import (
 	"net/http"
+	"regexp"
 
 	"github.com/gin-gonic/gin"
 )
 
-func handle_root_get(c *gin.Context) {
-	c.IndentedJSON(http.StatusOK, "sysd_http running");
+func AddServiceSuffixIfNeeded(service string) string {
+	matched, _ := regexp.MatchString("^.*\\.service$", service)
+
+	if matched {
+		return service
+	} else {
+		return "" + service + ".service"
+	}
 }
 
-func get_services(c *gin.Context) {
-
-}
-
-func get_service_by_name(c *gin.Context) {
+func GetServiceByName(c *gin.Context) {
 	name := c.Param("name")
+	name = AddServiceSuffixIfNeeded(name)
 
-	c.IndentedJSON(http.StatusOK, name)
+	service := QueryService(name)
+
+	c.IndentedJSON(http.StatusOK, service)
 }
 
 func main() {
 	router := gin.Default()
-	router.GET("/", handle_root_get)
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, "sysd_http running")
+	})
 
-	router.GET("/service", get_services)
-	router.GET("/service/<name>", get_service_by_name)
+	router.GET("/service/:name", GetServiceByName)
 
-	router.Run("localhost:8000")
+	router.Run("0.0.0.0:8000")
 }
